@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XKIT Panel — макет</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: ['selector', '[data-theme="dark"]'],
+  theme: { extend: {
+    colors: {
+      base: { 900:'#0d1117', 800:'#161b22', 700:'#21262d', 600:'#30363d' },
+      acc: { DEFAULT:'#58a6ff', dim:'#1f6feb' },
+      ok:'#3fb950', warn:'#d29922', bad:'#f85149'
+    },
+    fontFamily: { mono:['ui-monospace','SFMono-Regular','Menlo','monospace'] }
+  }}
+}
+</script>
+<style>
+  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+  .card{border-radius:12px}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
+  .spark{stroke:#58a6ff;fill:none;stroke-width:1.5}
+  [data-theme="light"] .spark{stroke:#0969da}
+  .nav-item.active{background:rgba(88,166,255,.12);color:#58a6ff}
+  [data-theme="light"] .nav-item.active{background:rgba(9,105,218,.1);color:#0969da}
+  .node-name{white-space:nowrap}
+  [data-theme="light"] .badge-dim{background:#eaeef2!important;color:#656d76!important}
+  [data-theme="light"] .btn-top{background:#fff!important;color:#1f2328!important;border-color:#d0d7de!important}
+</style>
+</head>
+<body class="bg-base-900 text-[#e6edf3] dark:bg-base-900 min-h-screen">
+<!-- переключатель темы/языка для макета -->
+<div class="fixed top-3 right-3 z-50 flex gap-2">
+  <button onclick="toggleTheme()" class="btn-top px-3 py-1.5 rounded-lg bg-base-700 text-sm border border-base-600 hover:border-acc">🌓 Тема</button>
+  <button onclick="toggleLang()" class="btn-top px-3 py-1.5 rounded-lg bg-base-700 text-sm border border-base-600 hover:border-acc">🌐 RU/EN</button>
+</div>
+
+<div class="flex min-h-screen">
+  <!-- SIDEBAR (ПК) -->
+  <aside class="hidden md:flex w-60 flex-col bg-base-800 border-r border-base-600 p-4 gap-1 fixed h-full">
+    <div class="flex items-center gap-2 px-2 mb-6">
+      <div class="w-8 h-8 rounded-lg bg-acc-dim flex items-center justify-center font-bold text-white">X</div>
+      <span class="font-semibold text-lg">XKIT <span class="text-acc">Panel</span></span>
+    </div>
+    <nav class="flex flex-col gap-1 text-sm">
+      <a class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer" onclick="show('dash')">📊 <span data-i18n="dash">Дашборд</span></a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-base-700" onclick="show('bal')">⚖️ <span data-i18n="bal">Балансировщик</span></a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-base-700" onclick="show('clients')">👥 <span data-i18n="clients">Клиенты</span></a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-base-700">🖧 <span data-i18n="nodes">Ноды</span></a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-base-700">🔗 <span data-i18n="subs">Подписки</span></a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-base-700">🛡 <span data-i18n="proto">Протоколы</span></a>
+      <a class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-base-700">⚙️ <span data-i18n="settings">Настройки</span></a>
+    </nav>
+    <div class="mt-auto px-2 text-xs text-[#8b949e]">
+      <div class="flex items-center gap-2 mb-2"><span class="w-2 h-2 rounded-full bg-ok"></span> <span data-i18n="master_online">Мастер онлайн</span></div>
+      <div>v0.1.0 · xray 26.11.9</div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="flex-1 md:ml-60 p-4 md:p-8 pb-24 md:pb-8">
+    <!-- header mobile -->
+    <div class="md:hidden flex items-center gap-2 mb-4">
+      <div class="w-7 h-7 rounded-lg bg-acc-dim flex items-center justify-center font-bold text-white text-sm">X</div>
+      <span class="font-semibold">XKIT <span class="text-acc">Panel</span></span>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <section id="dash">
+      <h1 class="text-2xl font-semibold mb-1" data-i18n="dash_title">Дашборд</h1>
+      <p class="text-[#8b949e] text-sm mb-6" data-i18n="dash_sub">Обзор мастера и нод · обновлено 5 сек назад</p>
+
+      <!-- stat cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="card bg-base-800 border border-base-600 p-4">
+          <div class="text-xs text-[#8b949e] mb-1" data-i18n="cpu">CPU</div>
+          <div class="text-2xl font-semibold">23<span class="text-sm text-[#8b949e]">%</span></div>
+          <div class="text-xs text-ok mt-1">1 vCPU · норма</div>
+        </div>
+        <div class="card bg-base-800 border border-base-600 p-4">
+          <div class="text-xs text-[#8b949e] mb-1" data-i18n="ram">RAM</div>
+          <div class="text-2xl font-semibold">412<span class="text-sm text-[#8b949e]"> МБ</span></div>
+          <div class="text-xs text-[#8b949e] mt-1">из 961 МБ</div>
+        </div>
+        <div class="card bg-base-800 border border-base-600 p-4">
+          <div class="text-xs text-[#8b949e] mb-1" data-i18n="clients_active">Клиентов онлайн</div>
+          <div class="text-2xl font-semibold">14</div>
+          <div class="text-xs text-ok mt-1">+2 за час</div>
+        </div>
+        <div class="card bg-base-800 border border-base-600 p-4">
+          <div class="text-xs text-[#8b949e] mb-1" data-i18n="traffic_today">Трафик сегодня</div>
+          <div class="text-2xl font-semibold">8.4<span class="text-sm text-[#8b949e]"> ГБ</span></div>
+          <svg class="w-full h-6 mt-1" viewBox="0 0 100 24" preserveAspectRatio="none"><polyline class="spark" points="0,20 12,16 24,18 36,10 48,12 60,6 72,9 84,4 100,7"/></svg>
+        </div>
+      </div>
+
+      <!-- nodes + alerts -->
+      <div class="grid lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 card bg-base-800 border border-base-600 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-semibold" data-i18n="nodes_status">Ноды</h2>
+            <button class="text-xs text-acc hover:underline" data-i18n="add_node">+ Добавить ноду</button>
+          </div>
+          <div class="space-y-3">
+            <!-- node card -->
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-base-900 border border-base-600">
+              <span class="text-xl">🇩🇪</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2"><span class="font-medium text-sm node-name">Frankfurt-1</span><span class="text-[10px] px-1.5 py-0.5 rounded bg-acc-dim/20 text-acc">priority 1</span></div>
+                <div class="text-xs text-[#8b949e] font-mono">de1.example.net · reality</div>
+              </div>
+              <div class="text-right">
+                <div class="flex items-center gap-1.5 justify-end"><span class="w-2 h-2 rounded-full bg-ok"></span><span class="text-xs text-ok" data-i18n="alive">жива</span></div>
+                <div class="text-xs text-[#8b949e]">6 <span data-i18n="clients">клиентов</span> · 34%</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-base-900 border border-base-600">
+              <span class="text-xl">🇳🇱</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2"><span class="font-medium text-sm node-name">Amsterdam-1</span><span class="badge-dim text-[10px] px-1.5 py-0.5 rounded bg-base-700 text-[#8b949e]">priority 2</span></div>
+                <div class="text-xs text-[#8b949e] font-mono">nl1.example.net · xhttp</div>
+              </div>
+              <div class="text-right">
+                <div class="flex items-center gap-1.5 justify-end"><span class="w-2 h-2 rounded-full bg-ok"></span><span class="text-xs text-ok" data-i18n="alive">жива</span></div>
+                <div class="text-xs text-[#8b949e]">5 <span data-i18n="clients">клиентов</span> · 28%</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-base-900 border border-bad/40">
+              <span class="text-xl">🇺🇸</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2"><span class="font-medium text-sm node-name">NewYork-1</span><span class="badge-dim text-[10px] px-1.5 py-0.5 rounded bg-base-700 text-[#8b949e]">priority 3</span></div>
+                <div class="text-xs text-[#8b949e] font-mono">us1.example.net · ws</div>
+              </div>
+              <div class="text-right">
+                <div class="flex items-center gap-1.5 justify-end"><span class="w-2 h-2 rounded-full bg-bad"></span><span class="text-xs text-bad" data-i18n="down">недоступна</span></div>
+                <div class="text-xs text-[#8b949e]">3 → failover</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- alerts -->
+        <div class="card bg-base-800 border border-base-600 p-5">
+          <h2 class="font-semibold mb-4" data-i18n="alerts">События</h2>
+          <div class="space-y-3 text-sm">
+            <div class="flex gap-2"><span class="text-bad">●</span><div><div data-i18n="alert_node_down">Нода NewYork-1 недоступна</div><div class="text-xs text-[#8b949e]">2 мин назад · клиенты → Amsterdam</div></div></div>
+            <div class="flex gap-2"><span class="text-warn">●</span><div><div data-i18n="alert_expiry">Клиент ivan истёк</div><div class="text-xs text-[#8b949e]">1 час назад</div></div></div>
+            <div class="flex gap-2"><span class="text-ok">●</span><div><div data-i18n="alert_backup">Бэкап отправлен в TG</div><div class="text-xs text-[#8b949e]">3 часа назад</div></div></div>
+            <div class="flex gap-2"><span class="text-acc">●</span><div><div data-i18n="alert_failover">Failover: 3 клиента US→NL</div><div class="text-xs text-[#8b949e]">авто · без обрыва</div></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BALANCER ===== -->
+    <section id="bal" class="hidden">
+      <h1 class="text-2xl font-semibold mb-1" data-i18n="bal_title">Балансировщик</h1>
+      <p class="text-[#8b949e] text-sm mb-6" data-i18n="bal_sub">Sticky-карта клиент→нода · приоритет/цена · failover внутри страны</p>
+
+      <!-- country groups -->
+      <div class="grid lg:grid-cols-3 gap-4 mb-6">
+        <div class="card bg-base-800 border border-base-600 p-4">
+          <div class="flex items-center justify-between mb-3"><span class="font-semibold">🇩🇪 <span data-i18n="germany">Германия</span></span><span class="text-xs text-ok">2/2 <span data-i18n="alive">живы</span></span></div>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between p-2 rounded bg-base-900"><span>Frankfurt-1 <span class="text-acc text-xs">★1</span></span><span class="text-[#8b949e]">6 · 34%</span></div>
+            <div class="flex justify-between p-2 rounded bg-base-900"><span>Frankfurt-2 <span class="text-xs text-[#8b949e]">★2</span></span><span class="text-[#8b949e]">2 · 12%</span></div>
+          </div>
+          <div class="mt-3 text-xs text-[#8b949e]"><span data-i18n="price">Цена</span>: 1.0 · <span data-i18n="load">нагрузка</span> 46%</div>
+        </div>
+        <div class="card bg-base-800 border border-base-600 p-4">
+          <div class="flex items-center justify-between mb-3"><span class="font-semibold">🇳🇱 <span data-i18n="netherlands">Нидерланды</span></span><span class="text-xs text-ok">1/1 <span data-i18n="alive">жива</span></span></div>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between p-2 rounded bg-base-900"><span>Amsterdam-1 <span class="text-acc text-xs">★1</span></span><span class="text-[#8b949e]">8 · 51%</span></div>
+          </div>
+          <div class="mt-3 text-xs text-[#8b949e]"><span data-i18n="price">Цена</span>: 1.2 · <span data-i18n="load">нагрузка</span> 51%</div>
+        </div>
+        <div class="card bg-base-800 border border-bad/40 p-4">
+          <div class="flex items-center justify-between mb-3"><span class="font-semibold">🇺🇸 <span data-i18n="usa">США</span></span><span class="text-xs text-bad">0/1 <span data-i18n="down">недоступна</span></span></div>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between p-2 rounded bg-base-900 opacity-60"><span>NewYork-1 <span class="text-xs text-[#8b949e]">★1</span></span><span class="text-bad">down</span></div>
+          </div>
+          <div class="mt-3 text-xs text-warn" data-i18n="fallback_country">⚠ клиенты → другая страна (NL)</div>
+        </div>
+      </div>
+
+      <!-- sticky map table -->
+      <div class="card bg-base-800 border border-base-600 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold" data-i18n="sticky_map">Карта клиент → нода</h2>
+          <div class="flex gap-2 text-xs">
+            <span class="px-2 py-1 rounded bg-ok/15 text-ok" data-i18n="sticky">sticky</span>
+            <span class="px-2 py-1 rounded bg-warn/15 text-warn" data-i18n="failover">failover</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto hidden md:block">
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-[#8b949e] text-xs border-b border-base-600">
+              <th class="pb-2 pr-4" data-i18n="client">Клиент</th>
+              <th class="pb-2 pr-4" data-i18n="country">Страна</th>
+              <th class="pb-2 pr-4" data-i18n="node">Нода</th>
+              <th class="pb-2 pr-4" data-i18n="status">Статус</th>
+              <th class="pb-2 pr-4" data-i18n="traffic">Трафик</th>
+              <th class="pb-2"></th>
+            </tr></thead>
+            <tbody class="divide-y divide-base-600/50">
+              <tr><td class="py-2.5 pr-4 font-mono text-xs">ivan@mail.ru</td><td class="pr-4">🇩🇪 DE</td><td class="pr-4">Frankfurt-1</td><td class="pr-4"><span class="text-ok text-xs">● sticky</span></td><td class="pr-4 text-[#8b949e]">2.1 ГБ</td><td><button class="text-acc text-xs hover:underline" data-i18n="move">перенести</button></td></tr>
+              <tr><td class="py-2.5 pr-4 font-mono text-xs">petra@gmail.com</td><td class="pr-4">🇩🇪 DE</td><td class="pr-4">Frankfurt-1</td><td class="pr-4"><span class="text-ok text-xs">● sticky</span></td><td class="pr-4 text-[#8b949e]">1.4 ГБ</td><td><button class="text-acc text-xs hover:underline" data-i18n="move">перенести</button></td></tr>
+              <tr><td class="py-2.5 pr-4 font-mono text-xs">john@proton.me</td><td class="pr-4">🇺🇸 US</td><td class="pr-4">Amsterdam-1 <span class="text-warn text-xs">↪</span></td><td class="pr-4"><span class="text-warn text-xs">● failover</span></td><td class="pr-4 text-[#8b949e]">0.8 ГБ</td><td><button class="text-acc text-xs hover:underline" data-i18n="move">перенести</button></td></tr>
+              <tr><td class="py-2.5 pr-4 font-mono text-xs">anna@yandex.ru</td><td class="pr-4">🇳🇱 NL</td><td class="pr-4">Amsterdam-1</td><td class="pr-4"><span class="text-ok text-xs">● sticky</span></td><td class="pr-4 text-[#8b949e]">3.2 ГБ</td><td><button class="text-acc text-xs hover:underline" data-i18n="move">перенести</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- мобильные карточки -->
+        <div class="md:hidden space-y-3">
+          <div class="p-3 rounded-lg bg-base-900 border border-base-600">
+            <div class="flex items-center justify-between mb-1"><span class="font-mono text-xs">ivan@mail.ru</span><span class="text-ok text-xs">● sticky</span></div>
+            <div class="flex items-center justify-between text-xs text-[#8b949e]"><span>🇩🇪 DE · Frankfurt-1</span><span>2.1 ГБ</span></div>
+            <button class="text-acc text-xs mt-2 hover:underline" data-i18n="move">перенести</button>
+          </div>
+          <div class="p-3 rounded-lg bg-base-900 border border-base-600">
+            <div class="flex items-center justify-between mb-1"><span class="font-mono text-xs">petra@gmail.com</span><span class="text-ok text-xs">● sticky</span></div>
+            <div class="flex items-center justify-between text-xs text-[#8b949e]"><span>🇩🇪 DE · Frankfurt-1</span><span>1.4 ГБ</span></div>
+            <button class="text-acc text-xs mt-2 hover:underline" data-i18n="move">перенести</button>
+          </div>
+          <div class="p-3 rounded-lg bg-base-900 border border-warn/40">
+            <div class="flex items-center justify-between mb-1"><span class="font-mono text-xs">john@proton.me</span><span class="text-warn text-xs">● failover</span></div>
+            <div class="flex items-center justify-between text-xs text-[#8b949e]"><span>🇺🇸 US → Amsterdam-1 ↪</span><span>0.8 ГБ</span></div>
+            <button class="text-acc text-xs mt-2 hover:underline" data-i18n="move">перенести</button>
+          </div>
+          <div class="p-3 rounded-lg bg-base-900 border border-base-600">
+            <div class="flex items-center justify-between mb-1"><span class="font-mono text-xs">anna@yandex.ru</span><span class="text-ok text-xs">● sticky</span></div>
+            <div class="flex items-center justify-between text-xs text-[#8b949e]"><span>🇳🇱 NL · Amsterdam-1</span><span>3.2 ГБ</span></div>
+            <button class="text-acc text-xs mt-2 hover:underline" data-i18n="move">перенести</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CLIENTS ===== -->
+    <section id="clients" class="hidden">
+      <div class="flex items-center justify-between mb-6">
+        <div><h1 class="text-2xl font-semibold" data-i18n="clients_title">Клиенты</h1><p class="text-[#8b949e] text-sm">14 активных · 2 истекли</p></div>
+        <button class="px-4 py-2 rounded-lg bg-acc-dim text-white text-sm font-medium hover:bg-acc" data-i18n="add_client">+ Создать клиента</button>
+      </div>
+      <div class="card bg-base-800 border border-base-600 p-5">
+        <div class="overflow-x-auto hidden md:block">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-[#8b949e] text-xs border-b border-base-600">
+            <th class="pb-2 pr-4">Email</th><th class="pb-2 pr-4" data-i18n="country">Страна</th><th class="pb-2 pr-4" data-i18n="node">Нода</th><th class="pb-2 pr-4" data-i18n="expires">Истекает</th><th class="pb-2 pr-4" data-i18n="quota">Квота</th><th class="pb-2 pr-4" data-i18n="status">Статус</th><th class="pb-2"></th>
+          </tr></thead>
+          <tbody class="divide-y divide-base-600/50">
+            <tr><td class="py-2.5 pr-4 font-mono text-xs">ivan@mail.ru</td><td class="pr-4">🇩🇪</td><td class="pr-4">Frankfurt-1</td><td class="pr-4 text-[#8b949e]">12 дн</td><td class="pr-4 text-[#8b949e]">2.1/50 ГБ</td><td class="pr-4"><span class="text-ok text-xs">● активен</span></td><td><button class="text-acc text-xs">QR</button></td></tr>
+            <tr><td class="py-2.5 pr-4 font-mono text-xs">petra@gmail.com</td><td class="pr-4">🇩🇪</td><td class="pr-4">Frankfurt-1</td><td class="pr-4 text-[#8b949e]">30 дн</td><td class="pr-4 text-[#8b949e]">1.4/100 ГБ</td><td class="pr-4"><span class="text-ok text-xs">● активен</span></td><td><button class="text-acc text-xs">QR</button></td></tr>
+            <tr><td class="py-2.5 pr-4 font-mono text-xs">old@test.ru</td><td class="pr-4">🇳🇱</td><td class="pr-4">—</td><td class="pr-4 text-bad">истёк</td><td class="pr-4 text-[#8b949e]">50/50 ГБ</td><td class="pr-4"><span class="text-bad text-xs">● отключён</span></td><td><button class="text-acc text-xs" data-i18n="renew">продлить</button></td></tr>
+          </tbody>
+        </table>
+        </div>
+        <!-- мобильные карточки клиентов -->
+        <div class="md:hidden space-y-3">
+          <div class="p-3 rounded-lg bg-base-900 border border-base-600">
+            <div class="flex items-center justify-between mb-1"><span class="font-mono text-xs">ivan@mail.ru</span><span class="text-ok text-xs">● активен</span></div>
+            <div class="text-xs text-[#8b949e] mb-1">🇩🇪 Frankfurt-1 · 12 дн · 2.1/50 ГБ</div>
+            <button class="text-acc text-xs hover:underline">QR</button>
+          </div>
+          <div class="p-3 rounded-lg bg-base-900 border border-base-600">
+            <div class="flex items-center justify-between mb-1"><span class="font-mono text-xs">petra@gmail.com</span><span class="text-ok text-xs">● активен</span></div>
+            <div class="text-xs text-[#8b949e] mb-1">🇩🇪 Frankfurt-1 · 30 дн · 1.4/100 ГБ</div>
+            <button class="text-acc text-xs hover:underline">QR</button>
+          </div>
+          <div class="p-3 rounded-lg bg-base-900 border border-bad/40">
+            <div class="flex items-center justify-between mb-1"><span class="font-mono text-xs">old@test.ru</span><span class="text-bad text-xs">● отключён</span></div>
+            <div class="text-xs text-[#8b949e] mb-1">🇳🇱 — · <span class="text-bad">истёк</span> · 50/50 ГБ</div>
+            <button class="text-acc text-xs hover:underline" data-i18n="renew">продлить</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- BOTTOM NAV (мобильный) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-base-800 border-t border-base-600 flex justify-around py-2 z-40">
+  <button onclick="show('dash')" class="flex flex-col items-center gap-0.5 text-acc text-xs px-3">📊<span data-i18n="dash">Дашборд</span></button>
+  <button onclick="show('bal')" class="flex flex-col items-center gap-0.5 text-[#8b949e] text-xs px-3">⚖️<span data-i18n="bal">Баланс</span></button>
+  <button onclick="show('clients')" class="flex flex-col items-center gap-0.5 text-[#8b949e] text-xs px-3">👥<span data-i18n="clients">Клиенты</span></button>
+  <button class="flex flex-col items-center gap-0.5 text-[#8b949e] text-xs px-3">🖧<span data-i18n="nodes">Ноды</span></button>
+  <button class="flex flex-col items-center gap-0.5 text-[#8b949e] text-xs px-3">☰<span data-i18n="more">Ещё</span></button>
+</nav>
+
+<script>
+function show(id){
+  ['dash','bal','clients'].forEach(s=>document.getElementById(s).classList.toggle('hidden',s!==id));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(typeof event!=='undefined'&&event.currentTarget)event.currentTarget.classList.add('active');
+}
+function toggleTheme(){
+  const h=document.documentElement;
+  const dark=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',dark?'light':'dark');
+  document.body.className=dark?'bg-[#f6f8fa] text-[#1f2328] min-h-screen':'bg-base-900 text-[#e6edf3] min-h-screen';
+  document.querySelectorAll('.bg-base-800').forEach(e=>e.style.background=dark?'#fff':'');
+  document.querySelectorAll('.bg-base-900').forEach(e=>e.style.background=dark?'#f6f8fa':'');
+  document.querySelectorAll('.border-base-600').forEach(e=>e.style.borderColor=dark?'#d0d7de':'');
+  document.querySelectorAll('.text-\\[\\#8b949e\\]').forEach(e=>e.style.color=dark?'#656d76':'');
+}
+const i18n={en:{dash:'Dashboard',bal:'Balancer',clients:'Clients',nodes:'Nodes',subs:'Subscriptions',proto:'Protocols',settings:'Settings',master_online:'Master online',dash_title:'Dashboard',dash_sub:'Master & nodes overview · updated 5s ago',cpu:'CPU',ram:'RAM',clients_active:'Clients online',traffic_today:'Traffic today',nodes_status:'Nodes',add_node:'+ Add node',alive:'alive',down:'down',alerts:'Events',alert_node_down:'Node NewYork-1 unavailable',alert_expiry:'Client ivan expired',alert_backup:'Backup sent to TG',alert_failover:'Failover: 3 clients US→NL',bal_title:'Balancer',bal_sub:'Sticky map client→node · priority/price · in-country failover',germany:'Germany',netherlands:'Netherlands',usa:'USA',price:'Price',load:'load',fallback_country:'⚠ clients → another country (NL)',sticky_map:'Client → node map',sticky:'sticky',failover:'failover',client:'Client',country:'Country',node:'Node',status:'Status',traffic:'Traffic',move:'move',clients_title:'Clients',add_client:'+ Create client',expires:'Expires',quota:'Quota',renew:'renew',more:'More'}};
+let lang='ru';const orig={};document.querySelectorAll('[data-i18n]').forEach(e=>orig[e.getAttribute('data-i18n')]=e.textContent);
+function toggleLang(){lang=lang==='ru'?'en':'ru';document.querySelectorAll('[data-i18n]').forEach(e=>{const k=e.getAttribute('data-i18n');e.textContent=lang==='en'?(i18n.en[k]||orig[k]):orig[k];});}
+</script>
+</body>
+</html>

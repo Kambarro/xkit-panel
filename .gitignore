@@ -1,0 +1,33 @@
+# binaries / build artifacts (только в корне репо — иначе cmd/panel/ тоже игнорится)
+/panel
+/agent
+/grpc-test
+/xkit-panel
+/xkit-panel-linux*
+/xkit-agent
+*.exe
+/tmp/
+dist/
+
+# databases / runtime
+*.db
+*.db-*
+first-login.txt
+*.log
+
+# screenshots / scratch
+*.png
+shots/
+scratch/
+
+# secrets / local
+.env
+*.pem
+*.key
+node_key
+
+# internal audit (not public)
+FEATURE-PARITY.md
+demo-assets/
+demo-assets.zip
+tools/__pycache__/

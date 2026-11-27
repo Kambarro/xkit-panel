@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="{{.Locale}}" data-theme="{{.Theme}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XKIT Panel — вход</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={darkMode:['selector','[data-theme="dark"]'],theme:{extend:{colors:{base:{900:'#0a0e1a',800:'#11162a',700:'#1a2138',600:'#1e2745'},acc:{DEFAULT:'#00E5FF',dim:'#0aa8cc'}}}}}
+</script>
+<style>
+:root{--bg:#0a0e1a;--card:#11162a;--border:#1e2745;--text:#f2fbff;--muted:#8b94ad;--acc:#00E5FF;--acc2:#B026FF}
+[data-theme="light"]{--bg:#f6f8fa;--card:#fff;--border:#d0d7de;--text:#1f2328;--muted:#656d76;--acc:#0969da}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px}
+.inp{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px}
+.inp:focus{outline:none;border-color:var(--acc)}
+.muted{color:var(--muted)}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+<div class="fixed top-3 right-3 flex gap-2">
+  <button onclick="toggleTheme()" class="px-3 py-1.5 rounded-lg card text-sm">🌓</button>
+  <button onclick="toggleLang()" class="px-3 py-1.5 rounded-lg card text-sm" id="lang-btn">🌐 {{.Locale}}</button>
+</div>
+<div class="card p-8 w-full max-w-sm">
+  <div class="flex items-center gap-2 mb-6 justify-center">
+    <svg viewBox="0 0 100 100" width="44" height="44" style="filter:drop-shadow(0 0 6px rgba(0,229,255,.4))"><rect x="28" y="56" width="20" height="11" rx="3" fill="#B026FF"/><rect x="52" y="56" width="20" height="11" rx="3" fill="#B026FF"/><rect x="22" y="70" width="16" height="11" rx="3" fill="#B026FF"/><rect x="42" y="70" width="20" height="11" rx="3" fill="#B026FF"/><rect x="66" y="70" width="12" height="11" rx="3" fill="#B026FF"/><polyline points="8,70 22,40 50,26 74,38" fill="none" stroke="#00E5FF" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="70" r="5.5" fill="#00E5FF"/><polygon points="93,62 76.5,49.5 84,40" fill="#00E5FF"/><line x1="91" y1="76" x2="97" y2="76" stroke="#00E5FF" stroke-width="5.5" stroke-linecap="round"/></svg>
+    <span class="font-semibold text-xl" style="background:linear-gradient(90deg,#00E5FF,#B026FF);-webkit-background-clip:text;background-clip:text;color:transparent">xkit</span>
+  </div>
+  <h1 class="text-lg font-semibold mb-1 text-center" data-i18n="login_title">Вход в панель</h1>
+  <p class="muted text-sm mb-6 text-center" data-i18n="login_sub">Введите учётные данные администратора</p>
+  {{if .Error}}<div class="mb-4 p-3 rounded-lg text-sm" style="background:rgba(248,81,73,.12);color:#f85149" data-i18n="login_err">Неверный логин или пароль</div>{{end}}
+  <form method="POST" action="{{.Base}}/login" class="space-y-4">
+    <div>
+      <label class="block text-sm mb-1.5" data-i18n="username">Логин</label>
+      <input name="username" type="text" autocomplete="username" required class="inp w-full px-3 py-2.5 text-sm" placeholder="">
+    </div>
+    <div>
+      <label class="block text-sm mb-1.5" data-i18n="password">Пароль</label>
+      <input name="password" type="password" autocomplete="current-password" required class="inp w-full px-3 py-2.5 text-sm" placeholder="••••••••">
+    </div>
+    <button type="submit" class="w-full py-2.5 rounded-lg bg-acc-dim text-white text-sm font-medium hover:bg-acc" data-i18n="signin">Войти</button>
+  </form>
+  <p class="muted text-xs mt-6 text-center">XKIT Panel {{.Version}} · {{.Domain}}</p>
+</div>
+<script>
+const I18N={en:{login_title:'Panel login',login_sub:'Enter administrator credentials',login_err:'Invalid username or password',username:'Username',password:'Password',signin:'Sign in'}};
+let locale='{{.Locale}}';const orig={};document.querySelectorAll('[data-i18n]').forEach(e=>orig[e.dataset.i18n]=e.textContent);
+function toggleLang(){locale=locale==='ru'?'en':'ru';document.querySelectorAll('[data-i18n]').forEach(e=>{const k=e.dataset.i18n;e.textContent=locale==='en'?(I18N.en[k]||orig[k]):orig[k];});document.getElementById('lang-btn').textContent='🌐 '+locale;}
+function toggleTheme(){const h=document.documentElement;h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';}
+</script>
+</body>
+</html>
