@@ -208,6 +208,8 @@ func verifyReleaseFile(tag, assetName, filePath string) error {
 	return nil
 }
 
+const panelRestartDelay = 500 * time.Millisecond
+
 // githubReleasesFull отдаёт версии без v для UI; GitHub download URL требует исходный v-тег.
 func panelReleaseDownloadTag(tag string) string { return "v" + strings.TrimPrefix(tag, "v") }
 
@@ -249,10 +251,14 @@ func (s *Server) panelUpdateApply(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "проверка релиза: "+err.Error(), 400)
 		return
 	}
-	// устанавливаем + рестарт
-	if out, err := exec.Command("bash", "-c", "install -m755 "+tmp+" /usr/local/bin/xkit-panel && rm -f "+tmp+" && systemctl restart xkit-panel").CombinedOutput(); err != nil {
-		http.Error(w, "install: "+string(out), 500)
+	// устанавливаем; restart только ПОСЛЕ HTTP-ответа, иначе клиент получает 500 при успехе
+	if out, err := exec.Command("bash", "-c", "install -m755 "+tmp+" /usr/local/bin/xkit-panel && rm -f "+tmp).CombinedOutput(); err != nil {
+		http.Error(w, "install: "+err.Error()+": "+string(out), 500)
 		return
 	}
 	writeJSON(w, map[string]any{"ok": true, "version": tag})
+	go func() {
+		time.Sleep(panelRestartDelay)
+		exec.Command("systemctl", "restart", "xkit-panel").Run()
+	}()
 }

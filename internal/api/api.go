@@ -12,12 +12,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/kambarro/xkit-panel/internal/antifilter"
 	"github.com/kambarro/xkit-panel/internal/auth"
 	"github.com/kambarro/xkit-panel/internal/backup"
 	"github.com/kambarro/xkit-panel/internal/balancer"
 	"github.com/kambarro/xkit-panel/internal/notify"
 	"github.com/kambarro/xkit-panel/internal/store"
-	"github.com/kambarro/xkit-panel/internal/antifilter"
 	"github.com/kambarro/xkit-panel/internal/subscription"
 	"github.com/kambarro/xkit-panel/internal/tgproxy"
 	"github.com/kambarro/xkit-panel/internal/xray"
@@ -55,10 +55,12 @@ func (s *Server) SetBotManager(m *BotManager)           { s.botMgr = m }
 func (s *Server) SetAuth(a *auth.Auth)                  { s.auth = a }
 func (s *Server) SetWebhook(w *notify.Webhook)          { s.webhook = w }
 
+const apiRequestTimeout = 240 * time.Second
+
 func (s *Server) Router() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(30 * time.Second))
+	r.Use(middleware.Timeout(apiRequestTimeout))
 	r.Use(limitBody) // SEC-06: лимит тела запроса (MaxBytesReader) для JSON-декодеров
 	r.Get("/api/dashboard", s.dashboard)
 	r.Get("/api/balancer", s.balancerView)
@@ -361,7 +363,9 @@ func (s *Server) balancerView(w http.ResponseWriter, r *http.Request) {
 	for _, a := range assigns {
 		av = append(av, aview{a.Email, a.Country, a.NodeID, a.NodeName, a.NodeCountry, a.Status, a.Variant})
 	}
-	if av == nil { av = []aview{} }
+	if av == nil {
+		av = []aview{}
+	}
 	writeJSON(w, map[string]any{"countries": countries, "assignments": av})
 }
 
@@ -375,16 +379,16 @@ func (s *Server) clients(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 	type cv struct {
-		Email   string `json:"email"`
-		Country string `json:"country"`
-		Enabled bool   `json:"enabled"`
-		Expiry  int64  `json:"expiry"`
-		Quota   int64  `json:"quota_bytes"`
-		Used    int64  `json:"used_bytes"`
-		TrafficTotal int64 `json:"traffic_total_bytes"` // lifetime up+down
-		TrafficUp    int64 `json:"traffic_up_bytes"`
-		TrafficDown  int64 `json:"traffic_down_bytes"`
-		TrafficLifetime bool `json:"traffic_lifetime"` // false = данные ещё не накопились (показан текущий счётчик)
+		Email           string `json:"email"`
+		Country         string `json:"country"`
+		Enabled         bool   `json:"enabled"`
+		Expiry          int64  `json:"expiry"`
+		Quota           int64  `json:"quota_bytes"`
+		Used            int64  `json:"used_bytes"`
+		TrafficTotal    int64  `json:"traffic_total_bytes"` // lifetime up+down
+		TrafficUp       int64  `json:"traffic_up_bytes"`
+		TrafficDown     int64  `json:"traffic_down_bytes"`
+		TrafficLifetime bool   `json:"traffic_lifetime"` // false = данные ещё не накопились (показан текущий счётчик)
 		store.TrafficPeriods
 	}
 	var out []cv
@@ -412,22 +416,22 @@ func (s *Server) nodes(w http.ResponseWriter, r *http.Request) {
 	totals := s.store.AllTrafficTotals("node")
 	periods := s.store.AllTrafficPeriods("node")
 	type nv struct {
-		ID       string  `json:"id"`
-		Name     string  `json:"name"`
-		Country  string  `json:"country"`
-		Priority int     `json:"priority"`
-		Price    float64 `json:"price"`
-		Host     string  `json:"host"`
-		Tunnel   string  `json:"tunnel"`
-		Health   string  `json:"health"`
-		Capacity int     `json:"capacity"`
-		Enabled  bool    `json:"enabled"`
-		Expiry   int64   `json:"expiry"`
-		Note     string  `json:"note"`
-		TrafficTotal int64 `json:"traffic_total_bytes"` // lifetime up+down
-		TrafficUp    int64 `json:"traffic_up_bytes"`
-		TrafficDown  int64 `json:"traffic_down_bytes"`
-		TrafficLifetime bool `json:"traffic_lifetime"` // false = накопитель пуст, показан биллинг-счётчик периода
+		ID              string  `json:"id"`
+		Name            string  `json:"name"`
+		Country         string  `json:"country"`
+		Priority        int     `json:"priority"`
+		Price           float64 `json:"price"`
+		Host            string  `json:"host"`
+		Tunnel          string  `json:"tunnel"`
+		Health          string  `json:"health"`
+		Capacity        int     `json:"capacity"`
+		Enabled         bool    `json:"enabled"`
+		Expiry          int64   `json:"expiry"`
+		Note            string  `json:"note"`
+		TrafficTotal    int64   `json:"traffic_total_bytes"` // lifetime up+down
+		TrafficUp       int64   `json:"traffic_up_bytes"`
+		TrafficDown     int64   `json:"traffic_down_bytes"`
+		TrafficLifetime bool    `json:"traffic_lifetime"` // false = накопитель пуст, показан биллинг-счётчик периода
 		store.TrafficPeriods
 	}
 	var out []nv
