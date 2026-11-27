@@ -161,7 +161,7 @@ tailwind.config = {
       </div>
       <div class="grid lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2 card p-5">
-          <div class="flex items-center justify-between mb-4"><h2 class="font-semibold" data-i18n="nodes_status">Ноды</h2><button class="text-xs" style="color:var(--acc)" data-i18n="add_node">+ Добавить ноду</button></div>
+          <div class="flex items-center justify-between mb-4"><h2 class="font-semibold" data-i18n="nodes_status">Ноды</h2><button onclick="openAddNode()" class="text-xs" style="color:var(--acc)" data-i18n="add_node">+ Добавить ноду</button></div>
           <div id="nodes-list" class="space-y-3"><div class="muted text-sm" data-i18n="loading">Загрузка…</div></div>
         </div>
         <div class="card p-5 mb-4"><div class="flex items-center justify-between"><h2 class="font-semibold"><svg class="icon"><use href="#ic-shield"/></svg> Доктор</h2><button onclick="runDoctor()" id="doctor-btn" class="text-xs px-3 py-1.5 rounded-lg cell border bd btn-neon" style="color:var(--acc)">Проверить</button></div><div id="doctor-results" class="mt-3 space-y-2 text-sm"></div></div>
@@ -682,6 +682,7 @@ function openAddNode(){
   modal(`<h2 class="text-lg font-semibold mb-1">${en?'Add node':'Добавить ноду'}</h2>
   <p class="muted text-xs mb-4">${en?'A node is a server in another country. The panel sets it up automatically — just paste the IP and password from your hosting.':'Нода — это сервер в другой стране. Панель настроит его сама — просто вставьте IP и пароль от хостинга.'}</p>
   <form onsubmit="addNode(event)" class="space-y-3">
+    <div><label class="block text-sm mb-1">${en?'Node name (optional)':'Имя ноды (необязательно)'} ${hint(en?'A clear name for the nodes list and rental notifications, e.g. Frankfurt-1. Empty = country and server address.':'Понятное имя для списка нод и уведомлений об аренде, например Frankfurt-1. Пусто = страна и адрес сервера.')}</label><input name="name" class="${inp}" ${sty} placeholder="Frankfurt-1"></div>
     <div><label class="block text-sm mb-1">${en?'Server IP or domain':'IP или домен сервера'} ${hint(en?'The address of the server you bought, e.g. 1.2.3.4. It comes in the email from your hosting provider.':'Адрес сервера, который вы купили, например 1.2.3.4. Приходит в письме от хостинга.')}</label><input name="host" required class="${inp}" ${sty} placeholder="1.2.3.4"></div>
     <div><label class="block text-sm mb-1">${en?'Root password':'Пароль root'} ${hint(en?'The server password from your hosting email. The panel uses it once to install everything, then stores it securely.':'Пароль сервера из письма хостинга. Панель использует его один раз чтобы всё установить.')}</label><input name="ssh_pass" type="password" required class="${inp}" ${sty} placeholder="${en?'server password':'пароль сервера'}"></div>
     <div><label class="block text-sm mb-1">${en?'Country':'Страна'} ${hint(en?'Where the server physically is. Affects speed and which sites open. Pick the country you want to exit from.':'Где физически находится сервер. Влияет на скорость и какие сайты открываются. Выберите страну выхода.')}</label><input name="country" id="add-node-country" required class="${inp}" ${sty} list="country-list-add" autocomplete="off" placeholder="${en?'DE, Germany, Германия…':'DE, Germany, Германия…'}"><datalist id="country-list-add"></datalist></div>
@@ -693,7 +694,7 @@ function openAddNode(){
 }
 async function addNode(e){
   e.preventDefault();const f=new FormData(e.target);
-  const body={host:f.get('host'),country:normalizeCountry(f.get('country')),ssh_pass:f.get('ssh_pass'),tunnel:f.get('tunnel')||'xhttp-reality',expiry_days:+f.get('expiry_days')||0};
+  const body={name:f.get('name'),host:f.get('host'),country:normalizeCountry(f.get('country')),ssh_pass:f.get('ssh_pass'),tunnel:f.get('tunnel')||'xhttp-reality',expiry_days:+f.get('expiry_days')||0};
   if(!body.country){toast(locale==='en'?'Unknown country — pick from suggestions':'Неизвестная страна — выберите из подсказок',false);return;}
   const r=await fetch(BASE+'/api/nodes/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   if(r.ok){closeModal();toast(locale==='en'?'Node provisioning started':'Установка ноды запущена');loadScreen('nodes');}

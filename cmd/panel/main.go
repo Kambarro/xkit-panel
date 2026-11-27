@@ -38,7 +38,7 @@ import (
 //go:embed web/*
 var webFS embed.FS
 
-const Version = "1.0.0"
+const Version = "1.0.1"
 
 func main() {
 	// RESCUE-CLI (P1 #7, panels-research Remnawave rescue-cli / Hiddify CLI / 3x-ui меню).
