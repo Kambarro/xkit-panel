@@ -122,15 +122,18 @@ sleep 1
 		http.Error(w, "component: xray|nginx (панель — самообновление позже)", 400)
 	}
 }
+
 // GET /api/system/panel-update — проверка обновления панели (GitHub releases).
 func (s *Server) panelUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	rels := githubReleases("kambarro/xkit-panel", 1)
 	latest := ""
-	if len(rels) > 0 { latest = rels[0] }
+	if len(rels) > 0 {
+		latest = rels[0]
+	}
 	available := latest != "" && latest != s.version && latest != "v"+s.version
 	writeJSON(w, map[string]any{
-		"current": s.version,
-		"latest": latest,
+		"current":          s.version,
+		"latest":           latest,
 		"update_available": available,
 	})
 }
@@ -205,35 +208,51 @@ func verifyReleaseFile(tag, assetName, filePath string) error {
 	return nil
 }
 
+// githubReleasesFull отдаёт версии без v для UI; GitHub download URL требует исходный v-тег.
+func panelReleaseDownloadTag(tag string) string { return "v" + strings.TrimPrefix(tag, "v") }
+
 // POST /api/system/panel-update — скачать, ПРОВЕРИТЬ ПОДПИСЬ и установить обновление панели.
 func (s *Server) panelUpdateApply(w http.ResponseWriter, r *http.Request) {
 	rels := githubReleasesFull("kambarro/xkit-panel", 1)
-	if len(rels) == 0 { http.Error(w, "не удалось получить релизы", 500); return }
+	if len(rels) == 0 {
+		http.Error(w, "не удалось получить релизы", 500)
+		return
+	}
 	tag := rels[0].Tag
 	if !validVersion(strings.TrimPrefix(tag, "v")) {
-		http.Error(w, "некорректный тег релиза", 500); return
+		http.Error(w, "некорректный тег релиза", 500)
+		return
 	}
 	// архитектура
 	arch := "linux-64"
-	if out, _ := exec.Command("uname", "-m").Output(); strings.Contains(string(out), "aarch64") { arch = "linux-arm64-v8a" }
+	if out, _ := exec.Command("uname", "-m").Output(); strings.Contains(string(out), "aarch64") {
+		arch = "linux-arm64-v8a"
+	}
 	assetName := "xkit-panel-" + arch
-	dlURL := fmt.Sprintf("https://github.com/kambarro/xkit-panel/releases/download/%s/%s", tag, assetName)
+	downloadTag := panelReleaseDownloadTag(tag)
+	dlURL := fmt.Sprintf("https://github.com/kambarro/xkit-panel/releases/download/%s/%s", downloadTag, assetName)
 	// скачиваем во временный каталог
 	tmpDir, err := os.MkdirTemp("", "xkit-panel-update-")
-	if err != nil { http.Error(w, "tmp: "+err.Error(), 500); return }
+	if err != nil {
+		http.Error(w, "tmp: "+err.Error(), 500)
+		return
+	}
 	defer os.RemoveAll(tmpDir)
 	tmp := filepath.Join(tmpDir, assetName)
 	if out, err := exec.Command("curl", "-fsSL", "--max-time", "120", "-o", tmp, dlURL).CombinedOutput(); err != nil {
-		http.Error(w, "download: "+string(out), 500); return
+		http.Error(w, "download: "+string(out), 500)
+		return
 	}
 	// SEC-05: SHA256SUMS + Ed25519-подпись ДО установки (иначе подмена бинаря = RCE)
-	if err := verifyReleaseFile(tag, assetName, tmp); err != nil {
+	if err := verifyReleaseFile(downloadTag, assetName, tmp); err != nil {
 		s.store.AddEvent("system_update", "error", "обновление панели отклонено: "+err.Error(), "{}")
-		http.Error(w, "проверка релиза: "+err.Error(), 400); return
+		http.Error(w, "проверка релиза: "+err.Error(), 400)
+		return
 	}
 	// устанавливаем + рестарт
 	if out, err := exec.Command("bash", "-c", "install -m755 "+tmp+" /usr/local/bin/xkit-panel && rm -f "+tmp+" && systemctl restart xkit-panel").CombinedOutput(); err != nil {
-		http.Error(w, "install: "+string(out), 500); return
+		http.Error(w, "install: "+string(out), 500)
+		return
 	}
 	writeJSON(w, map[string]any{"ok": true, "version": tag})
 }
