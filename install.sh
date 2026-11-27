@@ -26,19 +26,12 @@ if [[ $EUID -ne 0 ]]; then echo "Запустите от root: sudo bash install
 clean_input() { printf '%s' "$1" | tr -d '[:cntrl:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'; }
 DOMAIN="${XKIT_DOMAIN:-}"
 
-# non-interactive (pipe/curl | bash): нет TTY → автоопределяем IP или требуем XKIT_DOMAIN
-if [[ -z "$DOMAIN" && ! -t 0 ]]; then
-  DOMAIN=$(curl -s --max-time 8 ifconfig.me || curl -s --max-time 8 api.ipify.org || echo "")
-  DOMAIN="$(clean_input "$DOMAIN")"
-  if [[ -z "$DOMAIN" ]]; then
-    echo "ОШИБКА: не TTY (pipe) и не задан XKIT_DOMAIN. Запустите:"
-    echo "  XKIT_DOMAIN=<домен|IP> curl -fsSL https://raw.githubusercontent.com/kambarro/xkit-panel/main/install.sh | bash"
-    exit 1
+if [[ -z "$DOMAIN" ]]; then
+  # Пытаемся спросить интерактивно даже при pipe (curl | bash) — читаем из /dev/tty
+  # Если /dev/tty доступен и это не CI — спрашиваем
+  if [[ -t 1 && -r /dev/tty ]]; then
+    read -rp "Домен мастера (например vpn.example.com) или Enter для IP: " DOMAIN < /dev/tty || true
   fi
-  echo "→ Автоопределен внешний IP: $DOMAIN"
-elif [[ -z "$DOMAIN" ]]; then
-  # interactive: спрашиваем
-  read -rp "Домен мастера (например vpn.example.com) или Enter для IP: " DOMAIN || true
   DOMAIN="$(clean_input "$DOMAIN")"
   if [[ -z "$DOMAIN" ]]; then
     DOMAIN=$(curl -s --max-time 8 ifconfig.me || curl -s --max-time 8 api.ipify.org || echo "")
