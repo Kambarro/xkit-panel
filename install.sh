@@ -67,7 +67,7 @@ apt-get $APT_OPTS install -y -qq curl unzip sqlite3 sshpass certbot python3-cert
 # SCTP-баг ядра. Ubuntu nginx (1.24 на 24.04) НЕ получает фикс вовремя. Ставим nginx.org stable
 # (>=1.30.7) / mainline (>=1.31.9). Ubuntu-пакет nginx НЕ используем.
 UBUNTU_CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME")
-curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg 2>/dev/null
+curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg 2>/dev/null
 # Явно STABLE-ветка nginx.org (mainline — только осознанно, через UI/репо).
 # apt pin: nginx.org приоритетнее Ubuntu-пакета (иначе apt может взять Ubuntu nginx).
 echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/ubuntu $UBUNTU_CODENAME nginx" > /etc/apt/sources.list.d/nginx.list
@@ -386,9 +386,26 @@ if command -v ufw >/dev/null 2>&1; then
 fi
 
 # === запуск ===
+# УРОК (MSK reinstall, 27.11.2026): `nginx -t` ≠ «nginx встанет». Юнит
+# nginx.org — Type=forking с PIDFile=/run/nginx.pid; процесс, поднятый
+# МИМО systemd (плагин certbot --nginx / прошлая попытка), ExecStop не
+# убивает (pid-файл пустой) → новый мастер падает на bind() :80
+# (EADDRINUSE) → nginx.service failed → установка обрывается ДО xray
+# и панели. Чистим состояние ДО старта: стоп юнита, дожать выживших
+# мастеров, очистить pid-файл, дождаться :80, старт с явной ошибкой.
 systemctl daemon-reload
 nginx -t || { echo "ОШИБКА: nginx конфиг невалиден (проверьте сертификат/пути)"; exit 1; }
-systemctl restart nginx
+systemctl stop nginx >/dev/null 2>&1 || true
+pkill -x nginx >/dev/null 2>&1 || true
+for _ in $(seq 1 20); do
+  ss -tln 2>/dev/null | grep -qE ':80 ' || break
+  sleep 0.5
+done
+rm -f /run/nginx.pid
+systemctl start nginx || {
+  echo "ОШИБКА: nginx не стартовал после очистки портов — journalctl -xu nginx.service"
+  exit 1
+}
 systemctl enable xray xkit-panel >/dev/null 2>&1
 systemctl restart xray
 sleep 2
