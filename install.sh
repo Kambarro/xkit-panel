@@ -25,14 +25,26 @@ if [[ $EUID -ne 0 ]]; then echo "Запустите от root: sudo bash install
 # ДО валидации. Валидация строгая, но чистятся только артефакты терминала.
 clean_input() { printf '%s' "$1" | tr -d '[:cntrl:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'; }
 DOMAIN="${XKIT_DOMAIN:-}"
-if [[ -z "$DOMAIN" ]]; then
-  read -rp "Домен мастера (например vpn.example.com) или Enter для IP: " DOMAIN || true
-fi
-DOMAIN="$(clean_input "$DOMAIN")"
-if [[ -z "$DOMAIN" ]]; then
+
+# non-interactive (pipe/curl | bash): нет TTY → автоопределяем IP или требуем XKIT_DOMAIN
+if [[ -z "$DOMAIN" && ! -t 0 ]]; then
   DOMAIN=$(curl -s --max-time 8 ifconfig.me || curl -s --max-time 8 api.ipify.org || echo "")
   DOMAIN="$(clean_input "$DOMAIN")"
-  [[ -n "$DOMAIN" ]] && echo "Используем IP: $DOMAIN"
+  if [[ -z "$DOMAIN" ]]; then
+    echo "ОШИБКА: не TTY (pipe) и не задан XKIT_DOMAIN. Запустите:"
+    echo "  XKIT_DOMAIN=<домен|IP> curl -fsSL https://raw.githubusercontent.com/kambarro/xkit-panel/main/install.sh | bash"
+    exit 1
+  fi
+  echo "→ Автоопределен внешний IP: $DOMAIN"
+elif [[ -z "$DOMAIN" ]]; then
+  # interactive: спрашиваем
+  read -rp "Домен мастера (например vpn.example.com) или Enter для IP: " DOMAIN || true
+  DOMAIN="$(clean_input "$DOMAIN")"
+  if [[ -z "$DOMAIN" ]]; then
+    DOMAIN=$(curl -s --max-time 8 ifconfig.me || curl -s --max-time 8 api.ipify.org || echo "")
+    DOMAIN="$(clean_input "$DOMAIN")"
+    [[ -n "$DOMAIN" ]] && echo "Используем IP: $DOMAIN"
+  fi
 fi
 # валидация домена/IP ДО любых необратимых шагов (урок: пустой XKIT_HOST проходил
 # через необратимые шаги и установка умирала позже). Пустой/невалидный = явный die.
