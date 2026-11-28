@@ -38,7 +38,7 @@ import (
 //go:embed web/*
 var webFS embed.FS
 
-const Version = "1.0.1"
+const Version = "1.0.2"
 
 func main() {
 	// RESCUE-CLI (P1 #7, panels-research Remnawave rescue-cli / Hiddify CLI / 3x-ui меню).
@@ -289,7 +289,7 @@ func main() {
 	// Доступен только залогиненным с must_change=1 (Require пропускает этот путь).
 	mux.Handle(prefix+"/setup-password", au.Require(loginPath, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		setupPassTmpl.Execute(w, map[string]any{"Locale": curLocale(), "Theme": curTheme(), "Version": Version, "Domain": *domain, "Base": prefix})
+		setupPassTmpl.Execute(w, map[string]any{"Locale": curLocale(), "Theme": curTheme(), "Version": Version, "Domain": *domain, "Base": prefix, "AdminLogin": au.User(r)})
 	})))
 	mux.HandleFunc(prefix+"/logout", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost { http.Error(w, "POST only", 405); return }

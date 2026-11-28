@@ -38,7 +38,10 @@ body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background
     </div>
     <div>
       <label class="block text-sm mb-1.5" data-i18n="password">Пароль</label>
-      <input name="password" type="password" autocomplete="current-password" required class="inp w-full px-3 py-2.5 text-sm" placeholder="••••••••">
+      <div class="relative">
+        <input name="password" id="password" type="password" autocomplete="current-password" required class="inp w-full px-3 py-2.5 pr-10 text-sm" placeholder="••••••••">
+        <button type="button" onclick="togglePass(this)" class="absolute right-2 top-1/2 -translate-y-1/2 muted text-lg" aria-label="Показать пароль">👁</button>
+      </div>
     </div>
     <button type="submit" class="w-full py-2.5 rounded-lg bg-acc-dim text-white text-sm font-medium hover:bg-acc" data-i18n="signin">Войти</button>
   </form>
@@ -49,6 +52,7 @@ const I18N={en:{login_title:'Panel login',login_sub:'Enter administrator credent
 let locale='{{.Locale}}';const orig={};document.querySelectorAll('[data-i18n]').forEach(e=>orig[e.dataset.i18n]=e.textContent);
 function toggleLang(){locale=locale==='ru'?'en':'ru';document.querySelectorAll('[data-i18n]').forEach(e=>{const k=e.dataset.i18n;e.textContent=locale==='en'?(I18N.en[k]||orig[k]):orig[k];});document.getElementById('lang-btn').textContent='🌐 '+locale;}
 function toggleTheme(){const h=document.documentElement;h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';}
+function togglePass(btn){const i=document.getElementById('password');i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈';}
 </script>
 </body>
 </html>
