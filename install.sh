@@ -412,6 +412,19 @@ sleep 2
 systemctl restart xkit-panel
 sleep 2
 
+# УРОК (reinstall race, 28.11.2026): first-login.txt перезаписывается панелью
+# в bootstrap, который на переустановке может закончиться ПОЗЖЕ restart+sleep.
+# Без ожидания баннер печатал СТАРЫЙ пароль прошлой установки. Ждём, пока панель
+# реально применит пароль установщика (и на fresh, и на reinstall).
+CREDS_READY=0
+for _ in $(seq 1 60); do
+  if [[ -f "$DATA_DIR/first-login.txt" ]] && grep -q "^password=$ADMIN_PASS$" "$DATA_DIR/first-login.txt" 2>/dev/null; then
+    CREDS_READY=1
+    break
+  fi
+  sleep 0.5
+done
+
 # === ПРОВЕРКА ЭФФЕКТА (УРОК XKIT: «без ERR в логе» ≠ «сработало») ===
 # Шаги, обёрнутые || true, падают молча — проверяем живой результат, не exit-код.
 echo "→ Проверка установки…"
@@ -428,6 +441,12 @@ if [[ "$PANEL_CODE" != "200" && "$PANEL_CODE" != "302" && "$PANEL_CODE" != "301"
 else
   echo "  ✓ панель отвечает (HTTP $PANEL_CODE)"
 fi
+if [[ "$CREDS_READY" != "1" ]]; then
+  echo "  ✗ панель не применила пароль установщика за 30с (bootstrap не завершён)"
+  VERIFY_FAIL=1
+else
+  echo "  ✓ пароль админа применён (first-login.txt актуален)"
+fi
 if [[ "$VERIFY_FAIL" == "1" ]]; then
   echo ""
   echo "⚠️  Установка завершена, но НЕ все службы поднялись. Реквизиты ниже, диагностика:"
@@ -442,13 +461,14 @@ echo "║         XKIT Panel установлен!               ║"
 echo "╚══════════════════════════════════════════════╝"
 echo ""
 echo "  Панель:  https://$DOMAIN/$SECRET/"
-# логин случайный (не admin), пароль одноразовый — панель прочитает first-login.txt
-if [[ -f "$DATA_DIR/first-login.txt" ]]; then
+# Печатаем реквизиты ТОЛЬКО после подтверждения bootstrap — иначе здесь окажется
+# старый пароль прошлой установки (гонка first-login.txt).
+if [[ "$CREDS_READY" == "1" ]]; then
   echo "  Логин:   $(grep '^login=' "$DATA_DIR/first-login.txt" | cut -d= -f2)"
   echo "  Пароль:  $(grep '^password=' "$DATA_DIR/first-login.txt" | cut -d= -f2) (одноразовый — сменить при входе)"
 else
-  echo "  Логин:   см. journalctl -u xkit-panel | grep 'ПЕРВЫЙ ЗАПУСК'"
-  echo "  Пароль:  одноразовый, см. лог панели"
+  echo "  ✗ Реквизиты не печатаю: панель не подтвердила пароль установщика."
+  echo "    Диагностика: journalctl -u xkit-panel -n 50; cat $DATA_DIR/first-login.txt"
 fi
 echo "  Забыли пароль? SSH: xkit-panel reset-password"
 echo ""
