@@ -436,18 +436,6 @@ fi
 
 rm -rf "$TMP"
 
-# УРОК (reinstall, 28.11.2026): установка ПОВЕРХ старой БД не перезаписывает
-# пароль существующего админа (EnsureAdmin пропускает), а установщик печатал
-# пароль из свежего pass.conf/first-login — он в БД не попадал, вход не работал.
-# Если админ уже есть — явно сбрасываем ему одноразовый пароль: показанный
-# реквизит гарантированно совпадает с хешем в SQLite.
-if command -v sqlite3 >/dev/null 2>&1 && [[ -f "$DATA_DIR/panel.db" ]]; then
-  admin_n=$(sqlite3 "$DATA_DIR/panel.db" "SELECT COUNT(*) FROM admins;" 2>/dev/null || echo 0)
-  if [[ "$admin_n" != "0" ]]; then
-    "$INSTALL_DIR/xkit-panel" reset-password >/dev/null 2>&1 || true
-  fi
-fi
-
 echo ""
 echo "╔══════════════════════════════════════════════╗"
 echo "║         XKIT Panel установлен!               ║"

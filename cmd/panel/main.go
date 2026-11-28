@@ -6,8 +6,10 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"embed"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -38,7 +40,7 @@ import (
 //go:embed web/*
 var webFS embed.FS
 
-const Version = "1.0.2"
+const Version = "1.0.3"
 
 func main() {
 	// RESCUE-CLI (P1 #7, panels-research Remnawave rescue-cli / Hiddify CLI / 3x-ui меню).
@@ -219,6 +221,7 @@ func main() {
 		}
 	}
 	adminPass := env("XKIT_ADMIN_PASS", "")
+	adminPassExplicit := adminPass != ""
 	if adminPass == "" {
 		adminPass = randPassword()
 	}
@@ -226,10 +229,26 @@ func main() {
 		log.Fatalf("admin: %v", err)
 	} else if created {
 		st.SetSetting("admin_username", adminUser)
+		if adminPassExplicit {
+			st.SetSetting("admin_pass_bootstrap", sha256Hex(adminPass))
+		}
 		log.Printf("=== ПЕРВЫЙ ЗАПУСК: логин %s, одноразовый пароль: %s (сменить при входе) ===", adminUser, adminPass)
 		fmt.Fprintf(os.Stderr, "\n  XKIT Panel login: %s\n  one-time password: %s\n  (сменить при первом входе)\n\n", adminUser, adminPass)
 		// сохраняем реквизиты в файл (install.sh показывает их; пароль одноразовый)
 		os.WriteFile(parentDir(*dbPath)+"/first-login.txt", []byte(fmt.Sprintf("login=%s\npassword=%s\nодноразовый — сменить при первом входе\n", adminUser, adminPass)), 0600)
+	} else if adminPassExplicit {
+		// ПОВТОРНАЯ установка над существующей БД (урок 28.11.2026): установщик кладёт
+		// свежий XKIT_ADMIN_PASS, но EnsureAdmin пропускает существующего админа, и БД
+		// хранила старый хеш, пока печатался новый пароль → вход не работал. Здесь новый
+		// пароль установщика явно ложится в БД (ровно один раз за значение), а повторные
+		// рестарты с тем же значением пароль больше не трогают.
+		if changed, err := applyBootstrapPass(st, au, adminUser, adminPass); err != nil {
+			log.Printf("admin bootstrap: %v", err)
+		} else if changed {
+			log.Printf("=== ПОВТОРНАЯ УСТАНОВКА: пароль админа %s обновлён (одноразовый) ===", adminUser)
+			fmt.Fprintf(os.Stderr, "\n  XKIT Panel login: %s\n  one-time password: %s\n  (сменить при первом входе)\n\n", adminUser, adminPass)
+			os.WriteFile(parentDir(*dbPath)+"/first-login.txt", []byte(fmt.Sprintf("login=%s\npassword=%s\nодноразовый — сменить при первом входе\n", adminUser, adminPass)), 0600)
+		}
 	}
 
 	// UI (embed)
@@ -629,6 +648,31 @@ func randPassword() string {
 		b[i] = charset[int(b[i])%len(charset)]
 	}
 	return string(b)
+}
+
+// sha256Hex — строковый fingerprint значения (для отслеживания применённого пароля).
+func sha256Hex(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sum[:])
+}
+
+// applyBootstrapPass — ложит пароль установщика в БД существующего админа ровно один раз
+// за конкретное значение (по fingerprint в settings). Возвращает true, если пароль менялся.
+func applyBootstrapPass(st *store.Store, au *auth.Auth, adminUser, adminPass string) (bool, error) {
+	if adminPass == "" || !au.AdminExists(adminUser) {
+		return false, nil
+	}
+	fp := sha256Hex(adminPass)
+	if st.GetSetting("admin_pass_bootstrap", "") == fp {
+		return false, nil
+	}
+	if err := au.ResetPassword(adminUser, adminPass); err != nil {
+		return false, err
+	}
+	if err := st.SetSetting("admin_pass_bootstrap", fp); err != nil {
+		return true, err
+	}
+	return true, nil
 }
 
 // randHex — случайная hex-строка (для случайного логина).

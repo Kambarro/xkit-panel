@@ -6,7 +6,7 @@
 
 **Ваш VPN-сервер под ключ: собственная Go-панель поверх Xray-core, все протоколы, одна подписка на пользователя, sticky-балансировщик и каскад через зарубежные ноды — всё мышкой в браузере.**
 
-![Version](https://img.shields.io/badge/version-1.0.2-00E5FF?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.0.3-00E5FF?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Ubuntu%2024.04%2B-orange?style=flat-square)
 ![Core](https://img.shields.io/badge/core-Go%20%2B%20Xray-00ADD8?style=flat-square&logo=go&logoColor=white)
 ![Architecture](https://img.shields.io/badge/linux-amd64%20%C2%B7%20arm64-lightgrey?style=flat-square)
