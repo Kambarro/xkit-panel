@@ -106,7 +106,11 @@ func (a *Auth) ResetPassword(username, newPassword string) error {
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("пользователь %s не найден", username)
 	}
-	// убить все сессии (старый доступ отозван)
+	// убить все сессии (старый доступ отозван) — и в памяти, и в БД:
+	// иначе cookie от прошлой установки переживает сброс и логинит без ввода пароля.
+	if _, err := a.store.DB().Exec(`DELETE FROM sessions WHERE username=?`, username); err != nil {
+		return err
+	}
 	a.mu.Lock()
 	a.sessions = make(map[string]session)
 	a.mu.Unlock()

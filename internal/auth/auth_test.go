@@ -2,6 +2,7 @@ package auth
 import (
  "path/filepath"
  "testing"
+ "time"
  "github.com/kambarro/xkit-panel/internal/store"
 )
 func TestMustChangeFlow(t *testing.T){
@@ -26,4 +27,18 @@ func TestMustChangeFlow(t *testing.T){
  st.DB().QueryRow("SELECT pass_hash FROM admins WHERE username='xkit-ab12'").Scan(&hash)
  if !VerifyPassword("resetpass",hash){t.Error("новый пароль не.verify")}
  if VerifyPassword("onetimer",hash){t.Error("старый пароль ещё работает!")}
+}
+func TestResetPasswordRevokesDBSessions(t *testing.T){
+ st,err:=store.Open(filepath.Join(t.TempDir(),"t.db"))
+ if err!=nil{t.Fatal(err)}
+ defer st.Close()
+ a:=New(st)
+ if _,err:=a.EnsureAdmin("xkit-ab12","onetimer");err!=nil{t.Fatal(err)}
+ // сессия, пережившая рестарт, лежит в БД — при переустановке её надо отозвать
+ now:=time.Now().Unix()
+ if _,err:=st.DB().Exec(`INSERT OR REPLACE INTO sessions(token,username,expires) VALUES(?,?,?)`,"oldtoken","xkit-ab12",now+3600);err!=nil{t.Fatal(err)}
+ if err:=a.ResetPassword("xkit-ab12","freshpass");err!=nil{t.Fatal(err)}
+ var cnt int
+ if err:=st.DB().QueryRow(`SELECT COUNT(*) FROM sessions WHERE token='oldtoken'`).Scan(&cnt);err!=nil{t.Fatal(err)}
+ if cnt!=0{t.Errorf("после сброса старая БД-сессия осталась (cnt=%d)",cnt)}
 }
